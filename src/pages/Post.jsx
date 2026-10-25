@@ -1,5 +1,7 @@
 
 import { useState } from "react";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { auth, db } from "../firebase";
 import "./Post.css";
 
 function Post() {
@@ -9,38 +11,87 @@ function Post() {
   const [abstract, setAbstract] = useState("");
   const [articleText, setArticleText] = useState("");
   const [tags, setTags] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+    setMessage("");
+
+    const user = auth.currentUser;
+
+    if (!user) {
+      setMessage("Please log in before creating a post.");
+      return;
+    }
 
     const enteredTags = tags
       .split(",")
       .map((tag) => tag.trim())
-      .filter((tag) => tag.length > 0);
+      .filter(Boolean);
 
     if (!title.trim()) {
-      alert("Please enter a title.");
+      setMessage("Please enter a title.");
       return;
     }
 
-    if (enteredTags.length === 0 || enteredTags.length > 3) {
-      alert("Please enter between 1 and 3 tags.");
+    if (enteredTags.length < 1 || enteredTags.length > 3) {
+      setMessage("Please enter between 1 and 3 tags.");
       return;
     }
 
     if (postType === "Question" && !description.trim()) {
-      alert("Please describe your problem.");
+      setMessage("Please describe your problem.");
       return;
     }
 
-    if (postType === "Article") {
-      if (!abstract.trim() || !articleText.trim()) {
-        alert("Please enter both the abstract and article text.");
-        return;
-      }
+    if (
+      postType === "Article" &&
+      (!abstract.trim() || !articleText.trim())
+    ) {
+      setMessage("Please enter both the abstract and article text.");
+      return;
     }
 
-    alert("Your post has been submitted successfully!");
+    const postData = {
+      type: postType,
+      title: title.trim(),
+      tags: enteredTags,
+      authorId: user.uid,
+      authorEmail: user.email,
+      createdAt: serverTimestamp(),
+    };
+
+    if (postType === "Question") {
+      postData.description = description.trim();
+    } else {
+      postData.abstract = abstract.trim();
+      postData.articleText = articleText.trim();
+    }
+
+    setSaving(true);
+
+    try {
+      await addDoc(collection(db, "posts"), postData);
+
+      setMessage("Post saved successfully to Firestore!");
+
+      setPostType("Question");
+      setTitle("");
+      setDescription("");
+      setAbstract("");
+      setArticleText("");
+      setTags("");
+    } catch (error) {
+      console.error("Error saving post:", error);
+      setMessage(
+        error.code === "permission-denied"
+          ? "Firestore denied this operation. Please check your security rules."
+          : "Unable to save the post. Please try again."
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -74,10 +125,9 @@ function Post() {
           </label>
         </div>
 
-        <h3>What do you want to ask or share</h3>
+        <h3>What do you want to ask or share?</h3>
 
         <p className="post-help">
-          This section is designed based on the type of the post.
           Select Question or Article to display the relevant fields.
         </p>
 
@@ -85,21 +135,15 @@ function Post() {
         <input
           id="post-title"
           type="text"
-          placeholder={
-            postType === "Question"
-              ? "Start your question with how, what, why, etc."
-              : "Enter a descriptive title"
-          }
           value={title}
           onChange={(event) => setTitle(event.target.value)}
+          placeholder="Enter a descriptive title"
           required
         />
 
         {postType === "Question" ? (
           <>
-            <label htmlFor="post-description">
-              Describe your problem
-            </label>
+            <label htmlFor="post-description">Describe your problem</label>
             <textarea
               id="post-description"
               rows="9"
@@ -139,13 +183,19 @@ function Post() {
           type="text"
           value={tags}
           onChange={(event) => setTags(event.target.value)}
-          placeholder="Enter up to 3 tags separated by commas, e.g. Java"
+          placeholder="e.g. React, JavaScript"
           required
         />
 
-        <button className="post-submit" type="submit">
-          Post
+        <button className="post-submit" type="submit" disabled={saving}>
+          {saving ? "Saving..." : "Post"}
         </button>
+
+        {message && (
+          <p role="status" aria-live="polite">
+            {message}
+          </p>
+        )}
       </form>
     </main>
   );
