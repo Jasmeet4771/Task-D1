@@ -19,7 +19,7 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 app.use(express.json({ limit: "10kb" }));
 
 // Newsletter subscription endpoint
-app.post("/subscribe", async (req, res) => {
+app.post(["/subscribe", "/api/subscribe"], async (req, res) => {
     try {
         const email =
             typeof req.body?.email === "string"
