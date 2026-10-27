@@ -25,15 +25,18 @@ function Newsletter() {
         setLoading(true);
 
         try {
-            const response = await fetch(`${API_URL}/subscribe`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    email: trimmedEmail,
-                }),
-            });
+            const response = await fetch(
+    "https://devdeakinjasmeet4771-three.vercel.app/subscribe",
+    {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            email: trimmedEmail,
+        }),
+    }
+);
 
             const data = await response.json();
 
