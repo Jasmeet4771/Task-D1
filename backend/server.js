@@ -1,4 +1,4 @@
-
+const cors = require("cors");
 const express = require("express");
 const dotenv = require("dotenv");
 const sgMail = require("@sendgrid/mail");
@@ -15,7 +15,11 @@ if (!process.env.SENDGRID_API_KEY || !process.env.SENDGRID_FROM_EMAIL) {
 }
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
+app.use(cors({
+    origin: "https://devdeakinjasmeet4771.vercel.app",
+    methods: ["POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type"]
+}));
 app.use(express.json({ limit: "10kb" }));
 
 // Newsletter subscription endpoint
