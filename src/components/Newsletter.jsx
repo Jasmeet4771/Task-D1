@@ -26,7 +26,7 @@ function Newsletter() {
 
         try {
             const response = await fetch(
-    "https://devdeakinjasmeet4771-three.vercel.app/subscribe",
+    "https://task-d1-wttt.onrender.com/subscribe",
     {
         method: "POST",
         headers: {
