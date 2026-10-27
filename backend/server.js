@@ -83,6 +83,6 @@ app.use((error, req, res, next) => {
     next(error);
 });
 
-app.listen(PORT, () => {
-    console.log(`Backend running at http://localhost:${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Backend running on port ${PORT}`);
 });
